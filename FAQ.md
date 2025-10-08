@@ -163,8 +163,19 @@ Each rule applies to a specific device address and register address combination.
 3. **Subtract**: Subtract an offset from the value
 4. **Multiply**: Multiply value by a factor
 5. **Divide**: Divide value by a divisor
+6. **Remap Address**: Remap one register address to another (useful for device replacement)
 
 See [CONFIGURATION.md](CONFIGURATION.md) for detailed examples.
+
+### How does register remapping work?
+
+Register remapping allows you to map one register address to another:
+- Useful when replacing a device that uses different register addresses
+- Works bidirectionally: requests are remapped to target address, responses are remapped back to source
+- Example: Map register 100 to 200 - when master requests reg 100, proxy requests reg 200 from slave
+- Can be combined with value modifications
+
+See [EXAMPLES.md](EXAMPLES.md) Example 11 for a complete use case.
 
 ### Do modifications use floating point math?
 

@@ -9,6 +9,7 @@ This project implements a bidirectional Modbus-to-Modbus proxy for ESP32/ESP32-S
   - Overwrite: Replace register value with a constant
   - Add/Subtract: Modify value by adding or subtracting an offset
   - Multiply/Divide: Scale values by a factor
+  - Remap Address: Remap register addresses (e.g., to replace devices with different register layouts)
 - **Web Interface**: Configure modification rules through a simple web UI
 - **WiFi Support**: Works in both Access Point (AP) and Station (STA) modes
 - **RIOT OS**: Built on RIOT real-time operating system for reliability
@@ -125,6 +126,11 @@ The web interface allows you to:
   
 - **Divide**: Divides the register value by a divisor
   - Example: Halve the value (divide by 2)
+
+- **Remap Address**: Remaps one register address to another
+  - Example: Map register 100 to register 200 (useful when replacing devices with different register layouts)
+  - Source register (in config) gets remapped to target register (parameter value)
+  - Bidirectional: Requests use target address, responses map back to source address
 
 ### WiFi Modes
 

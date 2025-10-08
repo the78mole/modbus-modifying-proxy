@@ -270,6 +270,52 @@ Register Address: 0
 Modification Type: None  (pass through)
 ```
 
+## Example 11: Device Replacement with Different Register Layout
+
+### Scenario
+Replacing an old temperature sensor with a new model that uses different register addresses. The old sensor used register 40100 (register 100) for temperature, but the new sensor uses register 40200 (register 200) for the same data.
+
+### Setup
+- Modbus Master: Building Management System (configured for old sensor)
+- Old Slave: Temperature Sensor using register 100
+- New Slave: Replacement Temperature Sensor using register 200
+- Device Address: 5 (same for both sensors)
+
+### Problem
+The BMS is hardcoded to read temperature from register 100, but the new sensor provides it at register 200.
+
+### Solution: Register Remapping
+```
+Device Address: 5
+Register Address: 100
+Modification Type: Remap Address
+Parameter: 200
+```
+
+### Result
+- When the BMS requests register 100, the proxy translates this to register 200 and queries the new sensor
+- When the new sensor responds with register 200 data, the proxy presents it as register 100 to the BMS
+- The BMS continues to work without any configuration changes
+- Can combine with value modification rules (e.g., unit conversion) if needed
+
+### Additional Configuration
+If the new sensor also reports in different units (e.g., tenths of a degree), you can stack modifications:
+```
+Rule 1:
+  Device Address: 5
+  Register Address: 100
+  Modification Type: Remap Address
+  Parameter: 200
+
+Rule 2:
+  Device Address: 5
+  Register Address: 100
+  Modification Type: Divide
+  Parameter: 10
+```
+
+Note: The value modification happens after the register remap, so you configure it on the original (source) register address.
+
 ## Best Practices
 
 ### 1. Document Everything

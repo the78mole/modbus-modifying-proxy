@@ -159,8 +159,12 @@ static int32_t apply_modification(uint8_t addr, uint16_t reg, int32_t value)
 
 /**
  * @brief Process Modbus frame and apply modifications
+ * 
+ * @param frame Pointer to Modbus frame buffer
+ * @param len Pointer to frame length
+ * @param is_request true if frame is a request (master->slave), false if response (slave->master)
  */
-static void process_modbus_frame(uint8_t *frame, size_t *len)
+static void process_modbus_frame(uint8_t *frame, size_t *len, bool is_request)
 {
     /* Minimum Modbus frame: addr(1) + func(1) + data(2) + crc(2) = 6 bytes */
     if (*len < 6) {
@@ -170,8 +174,26 @@ static void process_modbus_frame(uint8_t *frame, size_t *len)
     uint8_t addr = frame[0];
     uint8_t func = frame[1];
 
-    /* Only process Read Holding Registers (0x03) and Read Input Registers (0x04) responses */
-    if ((func == 0x03 || func == 0x04) && *len > 4) {
+    /* Handle register remapping in requests (0x03, 0x04 read commands) */
+    if (is_request && (func == 0x03 || func == 0x04) && *len >= 8) {
+        /* Request format: addr(1) + func(1) + start_addr_H(1) + start_addr_L(1) + count_H(1) + count_L(1) + crc(2) */
+        uint16_t start_reg = (frame[2] << 8) | frame[3];
+        uint16_t remapped_reg = apply_register_remap(addr, start_reg, true);
+        
+        if (remapped_reg != start_reg) {
+            /* Update register address in request */
+            frame[2] = (remapped_reg >> 8) & 0xFF;
+            frame[3] = remapped_reg & 0xFF;
+            
+            /* Recalculate CRC */
+            uint16_t crc = modbus_crc(frame, *len - 2);
+            frame[*len - 2] = crc & 0xFF;
+            frame[*len - 1] = (crc >> 8) & 0xFF;
+        }
+    }
+    
+    /* Handle value modifications and reverse register remapping in responses */
+    if (!is_request && (func == 0x03 || func == 0x04) && *len > 4) {
         uint8_t byte_count = frame[2];
         
         /* Verify frame structure */
@@ -184,7 +206,7 @@ static void process_modbus_frame(uint8_t *frame, size_t *len)
             uint16_t reg_offset = i; /* Simplified - actual register address would need to be tracked */
             int32_t value = (frame[3 + i * 2] << 8) | frame[4 + i * 2];
             
-            /* Apply modification */
+            /* Apply value modification */
             int32_t modified = apply_modification(addr, reg_offset, value);
             
             /* Update frame if value changed */
@@ -227,8 +249,8 @@ static void *if1_to_if2_thread(void *arg)
         }
 
         if (len > 0) {
-            /* Process and modify frame */
-            process_modbus_frame(if1_buffer, &len);
+            /* Process and modify frame - requests from master (IF1) to slave (IF2) */
+            process_modbus_frame(if1_buffer, &len, true);
 
             /* Forward to Interface 2 */
             set_rs485_mode(RS485_DE_IF2, true);
@@ -269,8 +291,8 @@ static void *if2_to_if1_thread(void *arg)
         }
 
         if (len > 0) {
-            /* Process and modify frame */
-            process_modbus_frame(if2_buffer, &len);
+            /* Process and modify frame - responses from slave (IF2) to master (IF1) */
+            process_modbus_frame(if2_buffer, &len, false);
 
             /* Forward to Interface 1 */
             set_rs485_mode(RS485_DE_IF1, true);

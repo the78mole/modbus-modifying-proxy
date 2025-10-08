@@ -170,6 +170,26 @@ Parameter: 10
 
 Result: If sensor reads 1000, proxy returns 100
 
+#### 6. Remap Address (Type 6)
+
+Remaps one register address to another.
+
+**Use Case**: Replace a device with another that uses different register addresses.
+
+**Example**: Map old device register 40001 (register 0) to new device register 30001 (register 0 in new numbering, but different base)
+```
+Device Address: 1
+Register Address: 100
+Type: Remap Address
+Parameter: 200
+```
+
+Result: 
+- When master requests register 100, the proxy requests register 200 from the slave
+- When slave responds with register 200 data, the proxy presents it as register 100 to the master
+
+**Note**: This works bidirectionally - both requests and responses are automatically remapped.
+
 ## Web Interface Configuration
 
 ### Accessing Web Interface

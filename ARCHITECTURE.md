@@ -285,7 +285,6 @@ graph TB
 
 ### With MQTT Support
 
-```
 ```mermaid
 graph TB
     ESP32[ESP32<br/>Publisher] <-->|MQTT| Broker[MQTT Broker]

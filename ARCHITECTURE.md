@@ -146,7 +146,6 @@ graph LR
     ProxyIF1 --> Proxy[ESP32 Modbus Proxy<br/>UART1 ◄──► IF1 │ IF2 ◄──► UART2]
     ProxyIF2 --> Proxy
 ```
-```
 
 ## Modbus Frame Format
 

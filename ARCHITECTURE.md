@@ -197,20 +197,6 @@ sequenceDiagram
     CoAP-->>Browser: Response
     Browser->>Browser: Refresh
 ```
-│    rule()    │
-└──────┬───────┘
-       │ Update config
-       ▼
-┌──────────────┐
-│  Return OK   │
-└──────┬───────┘
-       │
-       ▼
-┌─────────────┐
-│   Browser   │
-│  Refresh    │
-└─────────────┘
-```
 
 ## State Machine
 

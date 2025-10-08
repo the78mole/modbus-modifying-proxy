@@ -142,18 +142,11 @@ The web interface allows you to:
 
 ## Architecture
 
-```
-┌─────────────┐         ┌──────────────┐         ┌─────────────┐
-│   Modbus    │◄──RS485─┤  ESP32 with  ├─RS485──►│   Modbus    │
-│   Master    │         │  RIOT OS     │         │   Slave     │
-└─────────────┘         └──────────────┘         └─────────────┘
-                               │
-                               │ WiFi
-                               │
-                        ┌──────▼──────┐
-                        │ Web Browser │
-                        │   Config    │
-                        └─────────────┘
+```mermaid
+graph LR
+    A[Modbus Master] <-->|RS485| B[ESP32 with RIOT OS]
+    B <-->|RS485| C[Modbus Slave]
+    B <-->|WiFi| D[Web Browser Config]
 ```
 
 The proxy sits between Modbus master and slave devices, forwarding all messages while applying configured modifications to register values.

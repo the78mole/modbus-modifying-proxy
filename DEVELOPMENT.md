@@ -59,21 +59,13 @@ modbus-modifying-proxy/
 
 ### Module Overview
 
-```
-┌─────────────────────────────────────────┐
-│              main.c                     │
-│  - Initialization                       │
-│  - Shell command loop                   │
-└─────────────────────────────────────────┘
-         │           │              │
-         ▼           ▼              ▼
-┌──────────────┐ ┌──────────┐ ┌──────────────┐
-│ modbus_proxy │ │wifi_mgr  │ │web_interface │
-│              │ │          │ │              │
-│ - RS485 I/O  │ │- AP mode │ │ - CoAP srv   │
-│ - Frame fwd  │ │- STA mode│ │ - HTML UI    │
-│ - Modify val │ │          │ │ - REST API   │
-└──────────────┘ └──────────┘ └──────────────┘
+```mermaid
+graph TB
+    Main[main.c<br/>- Initialization<br/>- Shell command loop]
+    
+    Main --> ModbusProxy[modbus_proxy<br/>- RS485 I/O<br/>- Frame fwd<br/>- Modify val]
+    Main --> WiFiMgr[wifi_mgr<br/>- AP mode<br/>- STA mode]
+    Main --> WebIf[web_interface<br/>- CoAP srv<br/>- HTML UI<br/>- REST API]
 ```
 
 ### Threading Model
@@ -88,12 +80,18 @@ The application uses multiple threads:
 
 ### Data Flow
 
-```
-RS485-1 → UART1 → Buffer → Process → Modify → Buffer → UART2 → RS485-2
-                              ↕
-                         Config Rules
-                              ↕
-                         Web Interface
+```mermaid
+flowchart LR
+    RS485_1[RS485-1] --> UART1
+    UART1 --> Buf1[Buffer]
+    Buf1 --> Process
+    Process --> Modify
+    Modify --> Buf2[Buffer]
+    Buf2 --> UART2
+    UART2 --> RS485_2[RS485-2]
+    
+    Config[Config Rules] <-.-> Modify
+    Web[Web Interface] <-.-> Config
 ```
 
 ## Adding New Features

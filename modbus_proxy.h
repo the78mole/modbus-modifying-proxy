@@ -21,7 +21,8 @@ typedef enum {
     MOD_TYPE_ADD,
     MOD_TYPE_SUBTRACT,
     MOD_TYPE_MULTIPLY,
-    MOD_TYPE_DIVIDE
+    MOD_TYPE_DIVIDE,
+    MOD_TYPE_REMAP        /* Register address remapping */
 } modify_type_t;
 
 /* Modification rule structure */
@@ -31,6 +32,7 @@ typedef struct {
     uint16_t reg_addr;        /* Register address */
     modify_type_t mod_type;   /* Type of modification */
     int32_t param;            /* Modification parameter (value, offset, multiplier, etc.) */
+                              /* For MOD_TYPE_REMAP: target register address */
 } modify_rule_t;
 
 /* Configuration structure */

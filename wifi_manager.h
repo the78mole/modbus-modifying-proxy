@@ -10,6 +10,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+/* Use ESP32 WiFi types if available */
+#ifdef ESP_PLATFORM
+#include "esp_wifi.h"
+#include "esp_wifi_types.h"
+#else
 /**
  * @brief WiFi operation modes
  */
@@ -18,6 +23,7 @@ typedef enum {
     WIFI_MODE_STA,      /* Station mode */
     WIFI_MODE_APSTA     /* Both AP and STA mode */
 } wifi_mode_t;
+#endif
 
 /**
  * @brief Initialize WiFi manager

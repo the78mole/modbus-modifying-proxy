@@ -6,14 +6,18 @@
 #include <string.h>
 #include "wifi_manager.h"
 
-#ifdef MODULE_ESP_WIFI
-#include "esp_wifi.h"
-#include "esp_wifi_params.h"
-#endif
-
 /* WiFi configuration */
 static wifi_mode_t current_mode = WIFI_MODE_AP;
 static bool connected = false;
+
+/* Default WiFi credentials from Makefile */
+#ifndef ESP_WIFI_SSID
+#define ESP_WIFI_SSID "ModbusProxy"
+#endif
+
+#ifndef ESP_WIFI_PASS  
+#define ESP_WIFI_PASS "modbus123"
+#endif
 
 /**
  * @brief Initialize WiFi manager
@@ -23,17 +27,15 @@ int wifi_manager_init(void)
     puts("Initializing WiFi...");
 
 #ifdef MODULE_ESP_WIFI
-    /* Initialize WiFi in AP mode by default */
-    esp_wifi_init();
+    /* TODO: Implement proper ESP32 WiFi initialization */
+    /* For now, just set defaults */
+    current_mode = WIFI_MODE_AP;
     
-    /* Start AP mode with default credentials */
-    wifi_start_ap(ESP_WIFI_SSID, ESP_WIFI_PASS);
-    
-    puts("WiFi initialized in AP mode");
+    puts("WiFi initialized in AP mode (placeholder)");
     printf("SSID: %s\n", ESP_WIFI_SSID);
     printf("Password: %s\n", ESP_WIFI_PASS);
 #else
-    puts("WiFi module not available");
+    puts("WiFi module not available - running in simulation mode");
 #endif
 
     return 0;

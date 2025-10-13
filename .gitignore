@@ -8,6 +8,7 @@ bin/
 *.d
 
 # RIOT OS specific
+RIOT/
 .murdock
 *.pyc
 __pycache__/

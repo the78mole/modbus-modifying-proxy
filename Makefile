@@ -4,8 +4,8 @@ APPLICATION = modbus-modifying-proxy
 # Default board for ESP32
 BOARD ?= esp32-wroom-32
 
-# RIOT base directory
-RIOTBASE ?= $(CURDIR)/../RIOT
+# RIOT base directory (local copy)
+RIOTBASE ?= $(CURDIR)/RIOT
 
 # Include packages
 USEMODULE += shell
@@ -18,7 +18,7 @@ USEMODULE += periph_gpio
 # WiFi support
 USEMODULE += esp_wifi
 USEMODULE += esp_now
-USEMODULE += esp_eth
+# USEMODULE += esp_eth  # Not needed for WiFi-only ESP32
 
 # Network stack
 USEMODULE += gnrc_netdev_default

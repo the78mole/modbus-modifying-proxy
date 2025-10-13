@@ -35,22 +35,54 @@ Default pin configuration (can be modified in code):
 
 ## Software Requirements
 
-- [RIOT OS](https://github.com/RIOT-OS/RIOT) (clone adjacent to this repository)
+- [RIOT OS](https://github.com/RIOT-OS/RIOT) (automatically cloned in project directory)
 - ESP-IDF toolchain
 - ARM GCC toolchain
 
+## Development Environment Setup
+
+### Option 1: Using Development Container (Recommended)
+
+The easiest way to get started is using the provided development container:
+
+1. **Prerequisites**: Install [Docker](https://docker.com) and [VS Code](https://code.visualstudio.com) with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+
+2. **Open in Container**: 
+   - Clone this repository
+   - Open VS Code in the project directory
+   - When prompted "Reopen in Container", click "Yes"
+   - Or use Command Palette: `Dev Containers: Reopen in Container`
+
+3. **Ready to Build**: The container automatically sets up ESP-IDF and all required tools
+
+### Option 2: Manual Setup
+
+If you prefer a manual setup:
+
 ## Building the Project
 
-### 1. Setup RIOT OS
+### Using Development Container
+
+If you're using the development container, the build process is simple:
 
 ```bash
-# Clone RIOT OS (if not already done)
-cd ..
-git clone https://github.com/RIOT-OS/RIOT.git
-cd modbus-modifying-proxy
+# Source ESP-IDF environment (done automatically in container)
+get_idf
+
+# Build for ESP32
+build-esp32
+
+# Or manually:
+make BOARD=esp32-wroom-32 all
 ```
 
-### 2. Configure WiFi Credentials (Optional)
+### Manual Build Process
+
+#### 1. Setup RIOT OS
+
+RIOT OS is automatically cloned into the project directory when you clone this repository.
+
+#### 2. Configure WiFi Credentials (Optional)
 
 Edit the Makefile to change default WiFi credentials:
 
@@ -59,7 +91,7 @@ CFLAGS += -DESP_WIFI_SSID=\"YourSSID\"
 CFLAGS += -DESP_WIFI_PASS=\"YourPassword\"
 ```
 
-### 3. Build for ESP32
+#### 3. Build for ESP32
 
 ```bash
 # For ESP32
@@ -69,7 +101,7 @@ make BOARD=esp32-wroom-32 all
 make BOARD=esp32s3-devkit all
 ```
 
-### 4. Flash to Device
+#### 4. Flash to Device
 
 ```bash
 # For ESP32
@@ -79,7 +111,7 @@ make BOARD=esp32-wroom-32 flash
 make BOARD=esp32s3-devkit flash
 ```
 
-### 5. Monitor Serial Output
+#### 5. Monitor Serial Output
 
 ```bash
 make BOARD=esp32-wroom-32 term

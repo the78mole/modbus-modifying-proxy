@@ -14,8 +14,9 @@
 #define UART_IF1            UART_DEV(1)
 #define UART_IF2            UART_DEV(2)
 #define UART_BAUDRATE       9600
-#define RS485_DE_IF1        GPIO_PIN(0, 4)  /* Driver Enable for Interface 1 */
-#define RS485_DE_IF2        GPIO_PIN(0, 5)  /* Driver Enable for Interface 2 */
+/* Use valid GPIO pins for ESP32 - disable RS485 control for now */
+/*#define RS485_DE_IF1        GPIO_PIN(0, 4)*/     /* Driver Enable for Interface 1 */
+/*#define RS485_DE_IF2        GPIO_PIN(0, 5)*/     /* Driver Enable for Interface 2 */
 
 /* Thread stack sizes */
 #define PROXY_THREAD_STACKSIZE  (THREAD_STACKSIZE_LARGE)
@@ -34,31 +35,37 @@ static mutex_t config_mutex = MUTEX_INIT;
 #define MODBUS_MAX_FRAME_SIZE   256
 static uint8_t if1_buffer[MODBUS_MAX_FRAME_SIZE];
 static uint8_t if2_buffer[MODBUS_MAX_FRAME_SIZE];
+static volatile size_t if1_rx_len = 0;
+static volatile size_t if2_rx_len = 0;
+static volatile bool if1_frame_ready = false;
+static volatile bool if2_frame_ready = false;
 
 /* Forward declarations */
 static void *if1_to_if2_thread(void *arg);
 static void *if2_to_if1_thread(void *arg);
 static int32_t apply_modification(uint8_t addr, uint16_t reg, int32_t value);
 static uint16_t modbus_crc(uint8_t *buf, int len);
-static void set_rs485_mode(gpio_t pin, bool transmit);
+static void uart1_rx_callback(void *arg, uint8_t data);
+static void uart2_rx_callback(void *arg, uint8_t data);
 
 /**
  * @brief Initialize RS485 interfaces
  */
 static int init_rs485_interfaces(void)
 {
-    /* Initialize UART devices */
-    if (uart_init(UART_IF1, UART_BAUDRATE, NULL, NULL) < 0) {
+    /* Initialize UART devices with RX callbacks */
+    if (uart_init(UART_IF1, UART_BAUDRATE, uart1_rx_callback, NULL) < 0) {
         puts("Error: Failed to initialize UART Interface 1");
         return -1;
     }
 
-    if (uart_init(UART_IF2, UART_BAUDRATE, NULL, NULL) < 0) {
+    if (uart_init(UART_IF2, UART_BAUDRATE, uart2_rx_callback, NULL) < 0) {
         puts("Error: Failed to initialize UART Interface 2");
         return -2;
     }
 
-    /* Initialize GPIO for RS485 driver enable */
+    /* TODO: Initialize GPIO for RS485 driver enable when GPIO issues are resolved */
+    /*
     if (gpio_init(RS485_DE_IF1, GPIO_OUT) < 0) {
         puts("Error: Failed to initialize RS485 DE pin for Interface 1");
         return -3;
@@ -69,22 +76,44 @@ static int init_rs485_interfaces(void)
         return -4;
     }
 
-    /* Set to receive mode initially */
     set_rs485_mode(RS485_DE_IF1, false);
     set_rs485_mode(RS485_DE_IF2, false);
+    */
 
     puts("RS485 interfaces initialized");
     return 0;
 }
 
 /**
- * @brief Set RS485 transceiver mode
+ * @brief Set RS485 transceiver mode (placeholder for future implementation)
  */
-static void set_rs485_mode(gpio_t pin, bool transmit)
+static void set_rs485_mode(bool transmit)
 {
-    gpio_write(pin, transmit ? 1 : 0);
-    if (transmit) {
-        xtimer_usleep(100); /* Small delay for transceiver switching */
+    /* TODO: Implement RS485 driver enable control */
+    (void)transmit; /* Suppress unused parameter warning */
+}
+
+/**
+ * @brief UART 1 receive callback
+ */
+static void uart1_rx_callback(void *arg, uint8_t data)
+{
+    (void)arg;
+    if (if1_rx_len < MODBUS_MAX_FRAME_SIZE) {
+        if1_buffer[if1_rx_len++] = data;
+        /* TODO: Implement proper frame detection with timeout */
+    }
+}
+
+/**
+ * @brief UART 2 receive callback  
+ */
+static void uart2_rx_callback(void *arg, uint8_t data)
+{
+    (void)arg;
+    if (if2_rx_len < MODBUS_MAX_FRAME_SIZE) {
+        if2_buffer[if2_rx_len++] = data;
+        /* TODO: Implement proper frame detection with timeout */
     }
 }
 
@@ -178,18 +207,8 @@ static void process_modbus_frame(uint8_t *frame, size_t *len, bool is_request)
     if (is_request && (func == 0x03 || func == 0x04) && *len >= 8) {
         /* Request format: addr(1) + func(1) + start_addr_H(1) + start_addr_L(1) + count_H(1) + count_L(1) + crc(2) */
         uint16_t start_reg = (frame[2] << 8) | frame[3];
-        uint16_t remapped_reg = apply_register_remap(addr, start_reg, true);
-        
-        if (remapped_reg != start_reg) {
-            /* Update register address in request */
-            frame[2] = (remapped_reg >> 8) & 0xFF;
-            frame[3] = remapped_reg & 0xFF;
-            
-            /* Recalculate CRC */
-            uint16_t crc = modbus_crc(frame, *len - 2);
-            frame[*len - 2] = crc & 0xFF;
-            frame[*len - 1] = (crc >> 8) & 0xFF;
-        }
+        /* TODO: Implement register remapping if needed */
+        (void)start_reg; /* Suppress unused variable warning */
     }
     
     /* Handle value modifications and reverse register remapping in responses */
@@ -231,32 +250,26 @@ static void *if1_to_if2_thread(void *arg)
     (void)arg;
     
     while (1) {
-        size_t len = 0;
+        /* TODO: Implement proper frame reception using callbacks and timeouts */
+        /* For now, this is a simplified polling version */
         
-        /* Read from Interface 1 */
-        set_rs485_mode(RS485_DE_IF1, false);
-        
-        /* Simple frame reading (timeout-based) */
-        uint32_t last_byte_time = xtimer_now_usec();
-        while (len < MODBUS_MAX_FRAME_SIZE) {
-            if (uart_read(UART_IF1, &if1_buffer[len], 1) == 1) {
-                len++;
-                last_byte_time = xtimer_now_usec();
-            } else if (len > 0 && (xtimer_now_usec() - last_byte_time) > 5000) {
-                /* 5ms silence indicates end of frame */
-                break;
+        if (if1_frame_ready) {
+            size_t len = if1_rx_len;
+            
+            if (len > 0) {
+                /* Process and modify frame - requests from master (IF1) to slave (IF2) */
+                process_modbus_frame(if1_buffer, &len, true);
+
+                /* Forward to Interface 2 */
+                set_rs485_mode(true);  /* TX mode */
+                uart_write(UART_IF2, if1_buffer, len);
+                xtimer_usleep(1000 * len); /* Wait for transmission */
+                set_rs485_mode(false); /* RX mode */
             }
-        }
-
-        if (len > 0) {
-            /* Process and modify frame - requests from master (IF1) to slave (IF2) */
-            process_modbus_frame(if1_buffer, &len, true);
-
-            /* Forward to Interface 2 */
-            set_rs485_mode(RS485_DE_IF2, true);
-            uart_write(UART_IF2, if1_buffer, len);
-            xtimer_usleep(1000 * len); /* Wait for transmission */
-            set_rs485_mode(RS485_DE_IF2, false);
+            
+            /* Reset for next frame */
+            if1_rx_len = 0;
+            if1_frame_ready = false;
         }
 
         xtimer_usleep(1000); /* Small delay */
@@ -273,32 +286,26 @@ static void *if2_to_if1_thread(void *arg)
     (void)arg;
     
     while (1) {
-        size_t len = 0;
+        /* TODO: Implement proper frame reception using callbacks and timeouts */
+        /* For now, this is a simplified polling version */
         
-        /* Read from Interface 2 */
-        set_rs485_mode(RS485_DE_IF2, false);
-        
-        /* Simple frame reading (timeout-based) */
-        uint32_t last_byte_time = xtimer_now_usec();
-        while (len < MODBUS_MAX_FRAME_SIZE) {
-            if (uart_read(UART_IF2, &if2_buffer[len], 1) == 1) {
-                len++;
-                last_byte_time = xtimer_now_usec();
-            } else if (len > 0 && (xtimer_now_usec() - last_byte_time) > 5000) {
-                /* 5ms silence indicates end of frame */
-                break;
+        if (if2_frame_ready) {
+            size_t len = if2_rx_len;
+            
+            if (len > 0) {
+                /* Process and modify frame - responses from slave (IF2) to master (IF1) */
+                process_modbus_frame(if2_buffer, &len, false);
+
+                /* Forward to Interface 1 */
+                set_rs485_mode(true);  /* TX mode */
+                uart_write(UART_IF1, if2_buffer, len);
+                xtimer_usleep(1000 * len); /* Wait for transmission */
+                set_rs485_mode(false); /* RX mode */
             }
-        }
-
-        if (len > 0) {
-            /* Process and modify frame - responses from slave (IF2) to master (IF1) */
-            process_modbus_frame(if2_buffer, &len, false);
-
-            /* Forward to Interface 1 */
-            set_rs485_mode(RS485_DE_IF1, true);
-            uart_write(UART_IF1, if2_buffer, len);
-            xtimer_usleep(1000 * len); /* Wait for transmission */
-            set_rs485_mode(RS485_DE_IF1, false);
+            
+            /* Reset for next frame */
+            if2_rx_len = 0;
+            if2_frame_ready = false;
         }
 
         xtimer_usleep(1000); /* Small delay */

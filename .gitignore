@@ -1,0 +1,27 @@
+# Build artifacts
+bin/
+*.o
+*.elf
+*.hex
+*.map
+*.a
+*.d
+
+# RIOT OS specific
+RIOT/
+.murdock
+*.pyc
+__pycache__/
+
+# Editor and IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Temporary files
+/tmp/
+*.tmp
+*.bak

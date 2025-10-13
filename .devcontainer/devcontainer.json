@@ -1,0 +1,38 @@
+{
+  "name": "Modbus Modifying Proxy Development",
+  "image": "espressif/idf:release-v5.5",
+  
+  // Features to add to the dev container
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  // Use 'forwardPorts' to make a list of ports inside the container available locally
+  "forwardPorts": [5683, 8080],
+
+  // Use 'postCreateCommand' to run commands after the container is created
+  "postCreateCommand": ["/bin/bash", ".devcontainer/setup.sh"],
+
+  // Configure tool-specific properties
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools",
+        "ms-python.python"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "terminal.integrated.env.linux": {
+          "IDF_PATH": "/opt/esp/idf"
+        }
+      }
+    }
+  },
+
+  // Environment variables for the container
+  "containerEnv": {
+    "IDF_PATH": "/opt/esp/idf"
+  }
+}

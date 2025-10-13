@@ -9,7 +9,7 @@ RIOTBASE ?= $(CURDIR)/RIOT
 
 # Include packages
 USEMODULE += shell
-USEMODULE += shell_commands
+# USEMODULE += shell_commands  # Not available in this RIOT version
 USEMODULE += ps
 USEMODULE += xtimer
 USEMODULE += periph_uart
@@ -21,7 +21,7 @@ USEMODULE += esp_now
 # USEMODULE += esp_eth  # Not needed for WiFi-only ESP32
 
 # Network stack
-USEMODULE += gnrc_netdev_default
+# USEMODULE += gnrc_netdev_default  # Not available in this RIOT version
 USEMODULE += auto_init_gnrc_netif
 USEMODULE += gnrc_ipv6_default
 USEMODULE += gnrc_icmpv6_echo
